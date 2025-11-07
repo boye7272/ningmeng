@@ -1766,6 +1766,29 @@
                     body: JSON.stringify(payload)
                 });
                 
+                // 新增：处理401错误
+                if (response.status === 401) {
+                    // 显示使用次数已用完的弹窗
+                    modals.usageExhausted.classList.add('active');
+                    accessPasswordInput.value = '';
+                    ACCESS_PASSWORD = '';
+                    processBtn.disabled = true;
+                    statusContainer.classList.add('hidden');
+                    // 抛出错误以便上层处理
+                    throw new Error(`API请求失败: Unauthorized（状态码：401）`);
+                }
+                
+                if (response.status === 503) {
+                    if (await response.text().includes('所有令牌分组 Gemini原价 下对于模型 gpt-image-1 均无可用渠道，请更换分组尝试')) {
+                        modals.changeToken.classList.add('active');
+                        accessPasswordInput.value = '';
+                        ACCESS_PASSWORD = '';
+                        processBtn.disabled = true;
+                        statusContainer.classList.add('hidden');
+                        throw new Error(`API请求失败: Service Unavailable（状态码：503）`);
+                    }
+                }
+                
                 if (!response.ok) {
                     let errorDetails = await response.text();
                     try {
